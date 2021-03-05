@@ -10,6 +10,12 @@
 
 class WPAdUtility {
 	public static function init() {
+		// Adds "Ad Utility" under the Settings menu, points the entry 
+		// to be run by WPAdUtility::do_settings_page().
+		add_action( 'admin_menu', array('WPAdUtility', 'admin_menu') );
+
+		add_action( 'admin_init', array('WPAdUtility', 'admin_init') );
+
 		// Add our Ads metabox to a few post types.
 		add_action( 'add_meta_boxes', array('WPAdUtility', 'add_meta_boxes') );
 
@@ -57,6 +63,73 @@ class WPAdUtility {
 		<?php
 	}
 
+	public static function admin_menu() {
+		add_options_page( 'Ad Utility Settings', 'Ad Utility', 'manage_options', 'ad_utility_settings', array('WPAdUtility', 'do_settings_page') );
+	}
+
+	public static function do_settings_page() {
+		if ( !current_user_can( 'manage_options' ) )  {
+	        wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+	    }
+		?>
+	    <div class="wrap">
+	    	<div id="icon-options-general" class="icon32"><br /></div>
+	    	<h2>Ad Utility Settings</h2>
+
+			<form method="post" action="options.php">
+				<table class="form-table">
+					<tbody>
+						<?php do_settings_sections('ad_utility_settings_page'); ?>
+					</tbody>
+				</table>
+
+				<p class="submit">
+					<input name="Submit" type="submit" class="button-primary" value="<?php esc_attr_e( 'Save Changes' ); ?>"/>
+				</p>
+
+				<?php settings_fields('ad_utility_settings_group'); ?>	
+			</form>
+	    </div>
+	    <?php
+	}
+
+	public static function admin_init() {
+	    // Add the settings section that all of our fields will belong to (heading not shown).
+	    add_settings_section('ad_utility_settings_section', '', array('WPAdUtility', 'ad_utility_settings_section_text'), 'ad_utility_settings_page');
+
+	    // Add the "Network ID" field, with a blank title, registered to the group "ad_utility_settings_group", output HTML using the function 
+	    // WPAdUtility::settings_page_network_id_field() as part of the table of settings for "ad_utility_settings_page" in a section of "ad_utility_settings_section".
+		add_settings_field('ad_utility_network_code', '', array('WPAdUtility', 'settings_page_network_id_field'), 'ad_utility_settings_page', 'ad_utility_settings_section');
+
+		// Register the setting (WordPress "option") of "ad_utility_network_code" in the settings group "ad_utility_settings_group".
+	    register_setting('ad_utility_settings_group', 'ad_utility_network_code');
+	}
+
+	public static function ad_utility_settings_section_text() {
+		1;
+	}
+
+	public static function settings_page_network_id_field() {
+		// Retrieve the URL for the external header.
+		$ad_utility_network_code = get_option('ad_utility_network_code', '');
+		?>
+		<tr valign="top">
+			<th colspan="2">
+				<p style="font-weight: normal;">
+					Below, you'll need to input the Google Ad Manager network ID value; it'll be something like <b>61175202</b>.
+				</p>
+			</th>
+		</tr>
+
+		<tr valign="top">
+			<th scope="row"><label for="ad_utility_network_code">Network ID</label></th>
+			<td>
+				<input name="ad_utility_network_code" type="text" id="ad_utility_network_code" value="<?php echo $ad_utility_network_code; ?>" class="regular-text code" style="width: 600px;" />
+			</td>
+		</tr>
+		<?php
+	}
+
 	// Actually save the values of the "Ads" metabox as post metadata.
 	public static function save_post( $post_id ) {
 	    // Bail if we're doing an auto save.
@@ -91,8 +164,10 @@ class WPAdUtility {
 			$wp_adutility_page_options = get_post_meta($post->ID, 'wp_adutility_page_options', true);
 		}
 
+		$ad_utility_network_code = get_option('ad_utility_network_code', '');
+
 		?>
-		<script> window.wp_adutility_network_code = ''; window.wp_adutility_page_options = '<?php echo $wp_adutility_page_options; ?>'; </script>
+		<script> window.wp_adutility_network_code = '<?php echo $ad_utility_network_code; ?>'; window.wp_adutility_mobile_px_max = 727; window.wp_adutility_page_options = '<?php echo $wp_adutility_page_options; ?>'; </script>
 		<?php
 	}
 }

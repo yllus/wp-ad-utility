@@ -58,7 +58,7 @@ var WPAdUtility = function() {
         }
         window.WPAdUtility.divs_initialized.push(div_id);
 
-        var arr_creative_sizes_allowed = window.WPAdUtility.filterOversizeAdSizes(creative_size);
+        var arr_creative_sizes_allowed = window.WPAdUtility.filterAdSizes(creative_size);
 
         googletag.cmd.push(function() {
             window.WPAdUtility.log('displayAd(): About to call googletag.defineSlot() for ad unit ' + str_adunit + ' at size [' + arr_creative_sizes_allowed + '] on ID #' + div_id);
@@ -85,18 +85,33 @@ var WPAdUtility = function() {
         return window.wp_adutility_network_code;
     }
 
-    this.filterOversizeAdSizes = function( arr_creative_sizes_all ) {
+    this.filterAdSizes = function( arr_creative_sizes_all ) {
         var arr_creative_sizes_allowed = new Array();
         var int_width = window.innerWidth || document.documentElement.clientWidth;
 
         for ( var i = 0; i < arr_creative_sizes_all.length; i++ ) {
-            if ( arr_creative_sizes_all[i][0] <= int_width ) {
-                arr_creative_sizes_allowed.push(arr_creative_sizes_all[i]);
+            // If we're on a mobile device, just filter out ads that won't fit. 
+            if ( int_width <= window.wp_adutility_mobile_px_max ) {
+                if ( arr_creative_sizes_all[i][0] <= int_width ) {
+                    arr_creative_sizes_allowed.push(arr_creative_sizes_all[i]);
 
-                window.WPAdUtility.log('displayAd(): Allowing ad size of [' + arr_creative_sizes_all[i] + ']; current browser width is ' + int_width);
+                    window.WPAdUtility.log('displayAd(): Allowing ad size of [' + arr_creative_sizes_all[i] + ']; current browser width is ' + int_width);
+                }
+                else {
+                    window.WPAdUtility.log('displayAd(): Filtered out ad size of [' + arr_creative_sizes_all[i] + ']; current browser width is ' + int_width);
+                }
             }
+            // If we're on a tablet or desktop device, only define appropriately sized ad definitions (that is, 
+            // ad slots that fit width and also are non-mobile widths).
             else {
-                window.WPAdUtility.log('displayAd(): Filtered out ad size of [' + arr_creative_sizes_all[i] + ']; current browser width is ' + int_width);
+                if ( arr_creative_sizes_all[i][0] <= int_width && arr_creative_sizes_all[i][0] >= window.wp_adutility_mobile_px_max ) {
+                    arr_creative_sizes_allowed.push(arr_creative_sizes_all[i]);
+
+                    window.WPAdUtility.log('displayAd(): Allowing ad size of [' + arr_creative_sizes_all[i] + ']; current browser width is ' + int_width);
+                }
+                else {
+                    window.WPAdUtility.log('displayAd(): Filtered out ad size of [' + arr_creative_sizes_all[i] + ']; current browser width is ' + int_width);
+                }
             }
         }
 
