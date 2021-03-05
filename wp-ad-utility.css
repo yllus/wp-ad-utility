@@ -1,0 +1,15 @@
+.wp-adutility-ad {
+    margin: auto;
+    overflow: hidden;
+}
+
+.wp-adutility-ad-leaderboard {
+    text-align: center;
+    min-height: 50px;
+}
+
+@media (min-width: 738px) {
+    .wp-adutility-ad-leaderboard {
+        min-height: 90px;
+    }
+}
